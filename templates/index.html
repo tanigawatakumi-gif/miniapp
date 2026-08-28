@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ミニアプリ制作サポート</title>
+    
+    <!-- キャッシュ無効化メタタグ -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <style>
+        .no-break {
+            white-space: nowrap;
+        }
+        body {
+            max-width: 393px; /* iPhone 15 画面幅最適化 */
+            margin: 0 auto;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-gray-800 pb-20">
+
+    <!-- ヘッダー -->
+    <header class="bg-emerald-600 text-white p-4 shadow-md sticky top-0 z-10 text-center">
+        <h1 class="text-lg font-bold no-break">ミニアプリ制作サポート</h1>
+    </header>
+
+    <!-- メインコンテンツエリア -->
+    <main class="flex-1 p-4">
+        
+        <!-- ホーム画面 -->
+        <section id="step-home" class="step-page">
+            <div class="text-center py-10 space-y-4">
+                <h2 class="text-xl font-bold no-break">ミニアプリ開発をはじめましょう</h2>
+                <p class="text-sm text-gray-600">ステップに沿って入力するだけで、GeminiがLINEミニアプリのコードを自動生成します。</p>
+            </div>
+        </section>
+
+        <!-- Step 1: ツールの準備 -->
+        <section id="step-1" class="step-page hidden space-y-4">
+            <h2 class="text-lg font-bold border-b pb-2 no-break">Step 1: ツールの準備</h2>
+            <p class="text-xs text-gray-500">以下の準備項目をすべて確認してください。</p>
+
+            <div class="space-y-3 bg-white p-4 rounded-lg shadow-sm border">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" class="step1-check w-5 h-5 text-emerald-600 rounded">
+                    <span class="text-sm font-medium">LINE公式アカウント（OA）の準備</span>
+                </label>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" class="step1-check w-5 h-5 text-emerald-600 rounded">
+                    <span class="text-sm font-medium">LINE Developers アカウントの準備</span>
+                </label>
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" class="step1-check w-5 h-5 text-emerald-600 rounded">
+                    <span class="text-sm font-medium">コーディングツール（GitHub / Codespaces）</span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Step 2: 仕様とデザイン -->
+        <section id="step-2" class="step-page hidden space-y-4">
+            <h2 class="text-lg font-bold border-b pb-2 no-break">Step 2: アプリの仕様とデザインを決める</h2>
+            <p class="text-sm font-medium">アプリの仕様とデザインを入力してください</p>
+            <textarea id="app-requirement" rows="6" 
+                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm" 
+                placeholder="例: テイクアウトの注文ができるミニアプリ。メニュー選択、数量入力、確認画面、LINE通知機能を実装したい。"></textarea>
+        </section>
+
+        <!-- Step 3: Geminiでのコード作成 -->
+        <section id="step-3" class="step-page hidden space-y-4">
+            <h2 class="text-lg font-bold border-b pb-2 no-break">Step 3: Geminiでのコード作成</h2>
+            
+            <div class="text-center py-4">
+                <button id="btn-generate" onclick="generateCode()" 
+                    class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg shadow hover:bg-emerald-700 transition">
+                    コードを生成
+                </button>
+            </div>
+
+            <!-- 読み込み中スピナー -->
+            <div id="loading-spinner" class="hidden text-center py-6">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+                <p class="text-sm text-gray-600 mt-2">Geminiがコードを生成中...</p>
+            </div>
+
+            <!-- コード表示エリア -->
+            <div id="code-result-container" class="hidden space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-emerald-600">✓ 生成完了</span>
+                </div>
+                <textarea id="generated-code-text" readonly rows="10" 
+                    class="w-full p-3 bg-gray-900 text-emerald-400 font-mono text-xs rounded-lg border"></textarea>
+            </div>
+        </section>
+
+        <!-- Step 4: 入力ガイド -->
+        <section id="step-4" class="step-page hidden space-y-4">
+            <h2 class="text-lg font-bold border-b pb-2 no-break">Step 4: 入力ガイド</h2>
+            
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">利用予定のツール</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center justify-center p-3 border rounded-lg cursor-pointer bg-white has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+                        <input type="radio" name="tool_choice" value="GitHub Codespaces" class="hidden" checked>
+                        <span class="text-sm font-medium">GitHub Codespaces</span>
+                    </label>
+                    <label class="flex items-center justify-center p-3 border rounded-lg cursor-pointer bg-white has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+                        <input type="radio" name="tool_choice" value="GitHub Pages" class="hidden">
+                        <span class="text-sm font-medium">GitHub Pages</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-sm font-bold text-gray-700">生成されたコード</label>
+                <button onclick="copyGeneratedCode()" class="w-full bg-gray-200 text-gray-800 text-xs py-2 rounded font-bold hover:bg-gray-300">
+                    コードをクリップボードにコピー
+                </button>
+                <textarea id="step4-code-view" readonly rows="8" 
+                    class="w-full p-3 bg-gray-100 text-gray-800 font-mono text-xs rounded-lg border"></textarea>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 固定ボトムフッター -->
+    <footer class="fixed bottom-0 left-0 right-0 max-w-[393px] mx-auto p-3 bg-white border-t shadow-lg z-20">
+        <button id="footer-btn" onclick="handleFooterClick()" 
+            class="w-full py-3 px-4 rounded-lg font-bold text-white transition bg-emerald-600">
+            ミニアプリをつくる
+        </button>
+    </footer>
+
+    <script>
+        let currentStep = 'home';
+        let generatedCodeData = '';
+
+        window.onload = function() {
+            if (window.location.hostname === 'localhost' || window.location.hostname.includes('github.dev')) {
+                console.log("プレビュー環境で起動中");
+            } else {
+                liff.init({ liffId: "YOUR_LIFF_ID" }).then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    }
+                }).catch(err => console.error(err));
+            }
+
+            setupEventListeners();
+        };
+
+        function setupEventListeners() {
+            const checks = document.querySelectorAll('.step1-check');
+            checks.forEach(chk => {
+                chk.addEventListener('change', () => {
+                    const allChecked = Array.from(checks).every(c => c.checked);
+                    toggleFooterButton(allChecked);
+                });
+            });
+
+            const requirementInput = document.getElementById('app-requirement');
+            requirementInput.addEventListener('input', () => {
+                const hasText = requirementInput.value.trim().length > 0;
+                toggleFooterButton(hasText);
+            });
+        }
+
+        function toggleFooterButton(active) {
+            const btn = document.getElementById('footer-btn');
+            if (active) {
+                btn.disabled = false;
+                btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            } else {
+                btn.disabled = true;
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+            }
+        }
+
+        function navigateTo(step) {
+            currentStep = step;
+            document.querySelectorAll('.step-page').forEach(page => page.classList.add('hidden'));
+            
+            const targetPage = document.getElementById(`step-${step}`);
+            if (targetPage) targetPage.classList.remove('hidden');
+
+            const btn = document.getElementById('footer-btn');
+
+            if (step === '1') {
+                btn.innerText = '次へ (Step 2)';
+                toggleFooterButton(false);
+            } else if (step === '2') {
+                btn.innerText = '次へ (Step 3)';
+                const hasText = document.getElementById('app-requirement').value.trim().length > 0;
+                toggleFooterButton(hasText);
+            } else if (step === '3') {
+                btn.innerText = '次へ (Step 4)';
+                toggleFooterButton(generatedCodeData.length > 0);
+            } else if (step === '4') {
+                btn.innerText = '完了';
+                toggleFooterButton(true);
+                document.getElementById('step4-code-view').value = generatedCodeData;
+            }
+        }
+
+        function handleFooterClick() {
+            if (currentStep === 'home') navigateTo('1');
+            else if (currentStep === '1') navigateTo('2');
+            else if (currentStep === '2') {
+                const requirement = document.getElementById('app-requirement').value;
+                sessionStorage.setItem('app_requirement', requirement);
+                navigateTo('3');
+            } else if (currentStep === '3') navigateTo('4');
+            else if (currentStep === '4') alert('設定が完了しました！');
+        }
+
+        async function generateCode() {
+            const btnGenerate = document.getElementById('btn-generate');
+            const spinner = document.getElementById('loading-spinner');
+            const resultContainer = document.getElementById('code-result-container');
+            const requirement = sessionStorage.getItem('app_requirement') || '';
+
+            btnGenerate.disabled = true;
+            btnGenerate.classList.add('opacity-50');
+            spinner.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+
+            try {
+                const res = await fetch('/generate-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requirement: requirement })
+                });
+                
+                const data = await res.json();
+                
+                if (data.result) {
+                    generatedCodeData = extractCode(data.result);
+                    document.getElementById('generated-code-text').value = generatedCodeData;
+                    resultContainer.classList.remove('hidden');
+                    btnGenerate.innerText = '完了';
+                    toggleFooterButton(true);
+                } else {
+                    alert('コード生成に失敗しました: ' + (data.error || '不明なエラー'));
+                }
+            } catch (e) {
+                alert('通信エラーが発生しました');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function extractCode(text) {
+            const match = text.match(/```(?:\w+)?\n([\s\S]*?)```/);
+            return match ? match[1].trim() : text.trim();
+        }
+
+        function copyGeneratedCode() {
+            const codeText = document.getElementById('step4-code-view').value;
+            navigator.clipboard.writeText(codeText).then(() => {
+                alert('コードをコピーしました');
+            });
+        }
+    </script>
+</body>
+</html>
